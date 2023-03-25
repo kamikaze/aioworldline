@@ -1,7 +1,13 @@
-from pydantic import SecretStr
+from pydantic import BaseSettings, SecretStr
 
 
-class WorldlineSettingsMixin:
-    worldline_login: str | None
-    worldline_password: SecretStr | None
-    worldline_account_id: str | None
+class Settings(BaseSettings):
+    login: str | None
+    password: SecretStr | None
+    account_id: str | None
+
+    class Config(BaseSettings.Config):
+        env_prefix = 'WORLDLINE_'
+
+
+settings = Settings()

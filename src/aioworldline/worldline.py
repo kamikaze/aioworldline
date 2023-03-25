@@ -7,6 +7,8 @@ from html.parser import HTMLParser
 from aiohttp import ClientSession
 from pydantic import SecretStr
 
+from aioworldline.conf import settings
+
 logger = logging.getLogger(__name__)
 LOGIN_PAGE_URL = 'https://portal.firstdata.lv/fdmp/login.jsp'
 AUTH_URL = 'https://portal.firstdata.lv/fdmp/j_security_check'
@@ -45,7 +47,7 @@ def _get_csrf_value(html_page: str) -> str | None:
 
 
 @asynccontextmanager
-async def login(username: str, password: SecretStr):
+async def login(username: str = settings.login, password: SecretStr = settings.password):
     params = {
         '__Action': 'login:b_login#Save#',
         'j_username': username,
@@ -73,9 +75,9 @@ async def login(username: str, password: SecretStr):
         yield session
 
 
-async def get_transaction_report(session: ClientSession, account_id: str, date_from: date, date_till: date,
-                                 date_type: str = 'D', use_date: str = 'TR', merchant: str = None,
-                                 term_id: str = None, report_type: str = 'detailed_turnover',
+async def get_transaction_report(session: ClientSession, date_from: date, date_till: date,
+                                 account_id: str = settings.account_id, date_type: str = 'D', use_date: str = 'TR',
+                                 merchant: str = None, term_id: str = None, report_type: str = 'detailed_turnover',
                                  export_type: str = 'csv') -> bytes:
     params = {
         '__Action': 'merchant:parent_id',

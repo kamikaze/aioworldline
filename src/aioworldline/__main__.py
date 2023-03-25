@@ -1,4 +1,4 @@
-from python3_project_template.extmod import c_fib
+from aioworldline.extmod import c_fib
 
 
 def main():

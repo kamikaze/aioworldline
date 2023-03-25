@@ -1,4 +1,4 @@
-Python3 based project
-=====================
+aioworldline
+============
 
-Some description here
+Unofficial Worldline portal data retrieving client

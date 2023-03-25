@@ -43,6 +43,12 @@ def _get_csrf_value(html_page: str) -> str | None:
     parser = WLHTMLParser()
     parser.feed(html_page)
 
+    if parser.csrf_value is None:
+        msg = 'Unable to extract CSRF value from the page'
+        logger.error(msg)
+
+        raise ValueError(msg)
+
     return parser.csrf_value
 
 
@@ -88,14 +94,8 @@ async def get_transaction_report(session: ClientSession, date_from: date, date_t
 
     logger.debug(f'Switching merchant account to {account_id}')
 
-    async with session.post(MERCHANT_SWITCH_URL, params=params) as response:
-        csrf = _get_csrf_value((await response.read()).decode())
-
-    if not csrf:
-        msg = 'Unable to extract CSRF value from the page'
-        logger.error(msg)
-
-        raise ValueError(msg)
+    async with session.post(MERCHANT_SWITCH_URL, params=params):
+        pass
 
     await sleep(10)
 
@@ -105,14 +105,8 @@ async def get_transaction_report(session: ClientSession, date_from: date, date_t
 
     logger.debug(f'Opening detailed turnover report page')
 
-    async with session.get(DETAILED_TURNOVER_PAGE_URL, params=params) as response:
-        csrf = _get_csrf_value((await response.read()).decode())
-
-    if not csrf:
-        msg = 'Unable to extract CSRF value from the page'
-        logger.error(msg)
-
-        raise ValueError(msg)
+    async with session.get(DETAILED_TURNOVER_PAGE_URL, params=params):
+        pass
 
     await sleep(10)
 

@@ -53,7 +53,7 @@ def _get_csrf_value(html_page: str) -> str | None:
 
 
 @asynccontextmanager
-async def login(username: str = settings.login, password: SecretStr = settings.password):
+async def login(username: str = settings.login, password: SecretStr = settings.password, timeout: int = None):
     params = {
         '__Action': 'login:b_login#Save#',
         'j_username': username,
@@ -63,20 +63,20 @@ async def login(username: str = settings.login, password: SecretStr = settings.p
         'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/111.0'
     }
 
-    async with ClientSession(headers=headers) as session:
+    async with ClientSession(headers=headers, timeout=timeout) as session:
         logger.debug('Opening login page')
 
         async with session.get(LOGIN_PAGE_URL):
             pass
 
-        await sleep(10)
+        await sleep(5)
 
         logger.debug('Authenticating')
 
         async with session.post(AUTH_URL, data=params):
             pass
 
-        await sleep(10)
+        await sleep(5)
 
         yield session
 

@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from datetime import date
 from html.parser import HTMLParser
 
-from aiohttp import ClientSession
+from aiohttp import ClientSession, ClientTimeout
 from pydantic import SecretStr
 
 from aioworldline.conf import settings
@@ -63,7 +63,7 @@ async def login(username: str = settings.login, password: SecretStr = settings.p
         'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/111.0'
     }
 
-    async with ClientSession(headers=headers, timeout=timeout) as session:
+    async with ClientSession(headers=headers, timeout=ClientTimeout(total=timeout)) as session:
         logger.debug('Opening login page')
 
         async with session.get(LOGIN_PAGE_URL):

@@ -1,2 +1,2 @@
 aiohttp[speedups]==3.8.4
-pydantic==1.10.8
+pydantic==1.10.9

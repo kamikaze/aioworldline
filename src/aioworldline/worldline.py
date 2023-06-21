@@ -135,5 +135,9 @@ async def get_transaction_report(session: ClientSession, date_from: date, date_t
             return await response.read()
         except ClientOSError as e:
             logger.error(f'Failed reading the response from Worldline: {e}')
+
+            raise
         except Exception as e:
             logger.error(f'Failed reading the response from Worldline: {e}')
+
+            raise

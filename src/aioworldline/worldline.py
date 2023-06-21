@@ -82,7 +82,7 @@ async def login(username: str = settings.login, password: SecretStr = settings.p
 
 
 async def get_transaction_report(session: ClientSession, date_from: date, date_till: date,
-                                 account_id: str = settings.account_id, date_type: str = 'D', use_date: str = 'SH',
+                                 account_id: str = settings.account_id, date_type: str = 'D', use_date: str = 'TR',
                                  merchant: str = None, term_id: str = None, report_type: str = 'detailed_turnover',
                                  export_type: str = 'csv') -> bytes:
     params = {

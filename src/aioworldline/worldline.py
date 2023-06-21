@@ -82,7 +82,7 @@ async def login(username: str = settings.login, password: SecretStr = settings.p
 
 
 async def get_transaction_report(session: ClientSession, date_from: date, date_till: date,
-                                 account_id: str = settings.account_id, date_type: str = 'D', use_date: str = 'TR',
+                                 account_id: str = settings.account_id, date_type: str = 'D', use_date: str = 'SH',
                                  merchant: str = None, term_id: str = None, report_type: str = 'detailed_turnover',
                                  export_type: str = 'csv') -> bytes:
     params = {
@@ -94,8 +94,8 @@ async def get_transaction_report(session: ClientSession, date_from: date, date_t
 
     logger.debug(f'Switching merchant account to {account_id}')
 
-    async with session.post(MERCHANT_SWITCH_URL, params=params):
-        pass
+    async with session.post(MERCHANT_SWITCH_URL, params=params) as response:
+        p = await response.read()
 
     await sleep(10)
 
@@ -105,8 +105,8 @@ async def get_transaction_report(session: ClientSession, date_from: date, date_t
 
     logger.debug(f'Opening detailed turnover report page')
 
-    async with session.get(DETAILED_TURNOVER_PAGE_URL, params=params):
-        pass
+    async with session.get(DETAILED_TURNOVER_PAGE_URL, params=params) as response:
+        p = await response.read()
 
     await sleep(10)
 
@@ -130,7 +130,7 @@ async def get_transaction_report(session: ClientSession, date_from: date, date_t
                                          '~{terminal_id} {term_type}|detailed_turnover:term_id_order~{terminal_id}',
     }
 
-    async with session.get(EXPORT_LIST_DATA_URL, params=params, allow_redirects=False) as response:
+    async with session.get(EXPORT_LIST_DATA_URL, params=params, allow_redirects=True) as response:
         try:
             return await response.read()
         except ClientOSError as e:

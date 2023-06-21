@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from datetime import date
 from html.parser import HTMLParser
 
-from aiohttp import ClientSession, ClientTimeout
+from aiohttp import ClientSession, ClientTimeout, ClientOSError
 from pydantic import SecretStr
 
 from aioworldline.conf import settings
@@ -131,4 +131,9 @@ async def get_transaction_report(session: ClientSession, date_from: date, date_t
     }
 
     async with session.get(EXPORT_LIST_DATA_URL, params=params, allow_redirects=False) as response:
-        return await response.read()
+        try:
+            return await response.read()
+        except ClientOSError as e:
+            logger.error(f'Failed reading the response from Worldline: {e}')
+        except Exception as e:
+            logger.error(f'Failed reading the response from Worldline: {e}')

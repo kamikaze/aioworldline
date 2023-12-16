@@ -10,11 +10,12 @@ from pydantic import SecretStr
 from aioworldline.conf import settings
 
 logger = logging.getLogger(__name__)
-LOGIN_PAGE_URL = 'https://portal.firstdata.lv/fdmp/login.jsp'
-AUTH_URL = 'https://portal.firstdata.lv/fdmp/j_security_check'
-MERCHANT_SWITCH_URL = 'https://portal.firstdata.lv/fdmp/transaction_info'
-DETAILED_TURNOVER_PAGE_URL = 'https://portal.firstdata.lv/fdmp/detailed_turnover'
-EXPORT_LIST_DATA_URL = 'https://portal.firstdata.lv/fdmp/export_list_data'
+BASE_URL = 'https://portal.baltic.worldline-solutions.com'
+LOGIN_PAGE_URL = f'{BASE_URL}/fdmp/login.jsp'
+AUTH_URL = f'{BASE_URL}/fdmp/j_security_check'
+MERCHANT_SWITCH_URL = f'{BASE_URL}/fdmp/transaction_info'
+DETAILED_TURNOVER_PAGE_URL = f'{BASE_URL}/fdmp/detailed_turnover'
+EXPORT_LIST_DATA_URL = f'{BASE_URL}/fdmp/export_list_data'
 
 
 class WLHTMLParser(HTMLParser):

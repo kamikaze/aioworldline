@@ -95,8 +95,9 @@ async def get_transaction_report(session: ClientSession, date_from: date, date_t
 
     logger.debug(f'Switching merchant account to {account_id}')
 
-    async with session.post(MERCHANT_SWITCH_URL, params=params):
-        pass
+    async with session.post(MERCHANT_SWITCH_URL, params=params) as response:
+        if not response.ok:
+            raise RuntimeError('Failed to switch merchant account')
 
     await sleep(10)
 
@@ -106,8 +107,9 @@ async def get_transaction_report(session: ClientSession, date_from: date, date_t
 
     logger.debug(f'Opening detailed turnover report page')
 
-    async with session.get(DETAILED_TURNOVER_PAGE_URL, params=params):
-        pass
+    async with session.get(DETAILED_TURNOVER_PAGE_URL, params=params) as response:
+        if not response.ok:
+            raise RuntimeError('Failed to open detailed turnover page')
 
     await sleep(10)
 
@@ -133,7 +135,12 @@ async def get_transaction_report(session: ClientSession, date_from: date, date_t
 
     async with session.get(EXPORT_LIST_DATA_URL, params=params, allow_redirects=True) as response:
         try:
-            return await response.read()
+            if not response.ok:
+                raise RuntimeError('Failed to export list data')
+
+            result = await response.read()
+
+            return result
         except ClientOSError as e:
             logger.error(f'Failed reading the response from Worldline: {e}')
 

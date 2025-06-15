@@ -19,8 +19,8 @@ keywords = []
 requires-python = "==3.13.*"
 
 dependencies = [
-    "aiohttp[speedups]~=3.12.12",
-    "pydantic~=2.11.6",
+    "aiohttp[speedups]~=3.12.13",
+    "pydantic~=2.11.7",
     "pydantic-settings~=2.9.1"
 ]
 

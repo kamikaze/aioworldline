@@ -21,7 +21,7 @@ requires-python = "==3.13.*"
 dependencies = [
     "aiohttp[speedups]~=3.12.15",
     "pydantic~=2.11.9",
-    "pydantic-settings~=2.10.1"
+    "pydantic-settings~=2.11.0"
 ]
 
 [dependency-groups]

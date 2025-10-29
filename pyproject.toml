@@ -19,7 +19,7 @@ keywords = []
 requires-python = ">=3.13.9,<3.15.0"
 
 dependencies = [
-    "aiohttp[speedups]~=3.13.1",
+    "aiohttp[speedups]~=3.13.2",
     "pydantic~=2.12.3",
     "pydantic-settings~=2.11.0"
 ]

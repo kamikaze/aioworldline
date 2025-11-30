@@ -20,7 +20,7 @@ requires-python = ">=3.13.9,<3.15.0"
 
 dependencies = [
     "aiohttp[speedups]~=3.13.2",
-    "pydantic~=2.12.4",
+    "pydantic~=2.12.5",
     "pydantic-settings~=2.12.0"
 ]
 

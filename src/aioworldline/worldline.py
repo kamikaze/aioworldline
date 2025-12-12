@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 from datetime import date
 from html.parser import HTMLParser
 
-from aiohttp import ClientSession, ClientTimeout, ClientOSError
+from aiohttp import ClientOSError, ClientSession, ClientTimeout
 from pydantic import SecretStr
 
 from aioworldline.conf import settings
@@ -19,7 +19,7 @@ EXPORT_LIST_DATA_URL = f'{BASE_URL}/fdmp/export_list_data'
 
 
 class WLHTMLParser(HTMLParser):
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.csrf_value: str | None = None
 
@@ -54,15 +54,13 @@ def _get_csrf_value(html_page: str) -> str | None:
 
 
 @asynccontextmanager
-async def login(username: str = settings.login, password: SecretStr = settings.password, timeout: int = None):
+async def login(username: str = settings.login, password: SecretStr = settings.password, timeout: int | None = None):
     params = {
         '__Action': 'login:b_login#Save#',
         'j_username': username,
         'j_password': password.get_secret_value(),
     }
-    headers = {
-        'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/111.0'
-    }
+    headers = {'User-Agent': 'Mozilla/5.0 (X11; Ubuntu; Linux x86_64; rv:109.0) Gecko/20100101 Firefox/111.0'}
 
     async with ClientSession(headers=headers, timeout=ClientTimeout(total=timeout)) as session:
         logger.debug('Opening login page')
@@ -82,10 +80,18 @@ async def login(username: str = settings.login, password: SecretStr = settings.p
         yield session
 
 
-async def get_transaction_report(session: ClientSession, date_from: date, date_till: date,
-                                 account_id: str = settings.account_id, date_type: str = 'D', use_date: str = 'TR',
-                                 merchant: str = None, term_id: str = None, report_type: str = 'detailed_turnover',
-                                 export_type: str = 'csv') -> bytes:
+async def get_transaction_report(
+    session: ClientSession,
+    date_from: date,
+    date_till: date,
+    account_id: str = settings.account_id,
+    date_type: str = 'D',
+    use_date: str = 'TR',
+    merchant: str | None = None,
+    term_id: str | None = None,
+    report_type: str = 'detailed_turnover',
+    export_type: str = 'csv',
+) -> bytes:
     params = {
         '__Action': 'merchant:parent_id',
         '__CSRF': 'null',
@@ -97,7 +103,8 @@ async def get_transaction_report(session: ClientSession, date_from: date, date_t
 
     async with session.post(MERCHANT_SWITCH_URL, params=params) as response:
         if not response.ok:
-            raise RuntimeError('Failed to switch merchant account')
+            msg = 'Failed to switch merchant account'
+            raise RuntimeError(msg)
 
     await sleep(10)
 
@@ -105,11 +112,12 @@ async def get_transaction_report(session: ClientSession, date_from: date, date_t
         'group': 'tab.detailed_turnover',
     }
 
-    logger.debug(f'Opening detailed turnover report page')
+    logger.debug('Opening detailed turnover report page')
 
     async with session.get(DETAILED_TURNOVER_PAGE_URL, params=params) as response:
         if not response.ok:
-            raise RuntimeError('Failed to open detailed turnover page')
+            msg = 'Failed to open detailed turnover page'
+            raise RuntimeError(msg)
 
     await sleep(10)
 
@@ -128,24 +136,24 @@ async def get_transaction_report(session: ClientSession, date_from: date, date_t
         'detailed_turnover:shipm_date_till': date_till.strftime('%d.%m.%Y'),
         'detailed_turnover:use_date': use_date,
         'detailed_turnover:merchant_ret': 'detailed_turnover:merchant~{merchant}|detailed_turnover:merchant_txt'
-                                          '~{merchant} {full_name}|detailed_turnover:merchant_order~{merchant}',
+        '~{merchant} {full_name}|detailed_turnover:merchant_order~{merchant}',
         'detailed_turnover:term_id_ret': 'detailed_turnover:term_id~{terminal_id}|detailed_turnover:term_id_txt'
-                                         '~{terminal_id} {term_type}|detailed_turnover:term_id_order~{terminal_id}',
+        '~{terminal_id} {term_type}|detailed_turnover:term_id_order~{terminal_id}',
     }
 
     async with session.get(EXPORT_LIST_DATA_URL, params=params, allow_redirects=True) as response:
         try:
             if not response.ok:
-                raise RuntimeError('Failed to export list data')
+                msg = 'Failed to export list data'
+                raise RuntimeError(msg)
 
-            result = await response.read()
+            return await response.read()
 
-            return result
-        except ClientOSError as e:
-            logger.error(f'Failed reading the response from Worldline: {e}')
+        except ClientOSError:
+            logger.exception('Failed reading the response from Worldline')
 
             raise
-        except Exception as e:
-            logger.error(f'Failed reading the response from Worldline: {e}')
+        except Exception:
+            logger.exception('Failed reading the response from Worldline')
 
             raise

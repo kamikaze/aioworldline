@@ -1,153 +1,25 @@
 [build-system]
-requires = ["setuptools", "wheel", "setuptools_scm"]
-build-backend = "setuptools.build_meta"
+requires = ["maturin>=1.8,<2.0"]
+build-backend = "maturin"
 
 [project]
 name = "aioworldline"
-dynamic = ["version"]
+version = "0.1.0"
 description = "Unofficial Worldline portal data retrieving client"
-authors = [
-    {name = "Oleg Korsak", email = "kamikaze.is.waiting.you@gmail.com"}
-]
-license = "GPL-3.0"
-readme = {file = "README.rst", content-type = "text/x-rst"}
+authors = [{ name = "Oleg Korsak", email = "kamikaze.is.waiting.you@gmail.com" }]
+license = { text = "GPL-3.0" }
+requires-python = ">=3.14"
+keywords = ["worldline", "payments", "transactions"]
 classifiers = [
-    "Development Status :: 4 - Beta",
-    "Programming Language :: Python"
-]
-keywords = []
-requires-python = ">=3.13.9,<3.15.0"
-
-dependencies = [
-    "aiohttp[speedups]~=3.13.5",
-    "pydantic~=2.13.0",
-    "pydantic-settings~=2.13.1"
+    "Programming Language :: Rust",
+    "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Office/Business :: Financial",
 ]
 
-[dependency-groups]
-dev = [
-    "build",
-    "pip",
-    "pre-commit",
-    "pyright",
-    "ruff",
-    "setuptools",
-    "setuptools_scm",
-    "ty",
-    "wheel",
-]
-testing = [
-    "pytest",
-    "pytest-cov",
-    "pytest-mock"
-]
-
-[project.urls]
-Homepage = "https://github.com/kamikaze/aioworldline"
-Documentation = "https://github.com/kamikaze/aioworldline/wiki"
-
-[tool.setuptools.packages.find]
-where = ["src"]
-exclude = ["tests"]
-
-[tool.setuptools_scm]
-
-[tool.bdist_wheel]
-universal = true
-
-[tool.ruff]
-line-length = 120
-indent-width = 4
-target-version = "py314"
-
-[tool.ruff.analyze]
-detect-string-imports = true
-
-[tool.ruff.lint]
-select = [
-    "FAST",
-    "YTT",
-    "ANN",
-    "I",
-    "E",
-    "W",
-    "PYI",
-    "A",
-    "ARG",
-    "ASYNC",
-    "B",
-    "C4",
-    "DTZ",
-    "EM",
-    "EXE",
-    "F",
-    "FA",
-    "FBT",
-    "FLY",
-    "FURB",
-    "G",
-    "ICN",
-    "INP",
-    "ISC",
-    "LOG",
-    "N",
-    "NPY",
-    "PD",
-    "PERF",
-    "PIE",
-    "PLC",
-    "PLE",
-    "PLR",
-    "PLW",
-    "PT",
-    "PTH",
-    "Q",
-    "RET",
-    "RSE",
-    "RUF",
-    "S",
-    "SIM",
-    "SLF",
-    "SLOT",
-    "T20",
-    "TC",
-    "TID",
-    "TRY",
-    "UP",
-]
-ignore = [
-    "ASYNC109",
-    "TC001", # issues with fastapi endpoints
-    "TC002", # issues with fastapi endpoints
-    "TC003", # issues with msgspec.Struct subclasses
-]
-
-[tool.ruff.lint.per-file-ignores]
-"tests/*.py" = ["DTZ", "S101", "T201"]
-
-[tool.ruff.lint.flake8-quotes]
-docstring-quotes = "double"
-inline-quotes = "single"
-
-[tool.ruff.format]
-exclude = ["*.pyi"]
-indent-style = "space"
-quote-style = "single"
-
-[tool.pyright]
-pythonVersion = "3.14"
-venvPath = "."
-venv = ".venv"
-reportMatchNotExhaustive = "error"
-reportUnnecessaryComparison = "error"
-
-[tool.ty.rules]
-unknown-argument = "ignore"  # false positives for Pydantic model fields
-
-[tool.pytest.ini_options]
-pythonpath = ["src"]
-asyncio_mode = "strict"
-asyncio_default_fixture_loop_scope = "function"
-addopts = "--cov aioworldline --cov-fail-under=0 --cov-report term-missing --verbose"
-norecursedirs = ["dist", "build", ".tox"]
-testpaths = ["tests"]
+[tool.maturin]
+# Activates the `python` feature which pulls in pyo3 + pyo3-async-runtimes
+# and compiles the extension module entry point in src/lib.rs.
+features = ["python"]
+python-source = "python"
+module-name = "aioworldline"

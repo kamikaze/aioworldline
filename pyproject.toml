@@ -29,5 +29,4 @@ Documentation = "https://github.com/kamikaze/aioworldline/blob/main/README.md"
 
 [tool.maturin]
 features = ["python"]
-python-source = "python"
 module-name = "aioworldline"

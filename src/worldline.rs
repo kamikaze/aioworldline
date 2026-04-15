@@ -188,7 +188,10 @@ impl WorldlineSession {
         );
 
         let export_params: &[(&str, &str)] = &[
-            ("uniqueid", "detailed_turnover:detailed_turnover_search_result"),
+            (
+                "uniqueid",
+                "detailed_turnover:detailed_turnover_search_result",
+            ),
             ("exportType", opts.export_type),
             ("page", "1"),
             ("countRow", "15"),

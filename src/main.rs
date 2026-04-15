@@ -29,8 +29,8 @@ async fn main() -> anyhow::Result<()> {
         &settings.password,
         Some(Duration::from_secs(15 * 60)),
     )
-        .await
-        .context("login failed")?;
+    .await
+    .context("login failed")?;
 
     let opts = ReportOptions {
         account_id: &settings.account_id,

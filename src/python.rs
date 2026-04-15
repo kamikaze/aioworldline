@@ -58,13 +58,10 @@ impl PyWorldlineSession {
     ) -> PyResult<Bound<'py, PyAny>> {
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
             let timeout = timeout_secs.map(Duration::from_secs);
-            let session = WorldlineSession::login(
-                &username,
-                &SecretString::new(password.into()),
-                timeout,
-            )
-            .await
-            .map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
+            let session =
+                WorldlineSession::login(&username, &SecretString::new(password.into()), timeout)
+                    .await
+                    .map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
 
             Python::attach(|py| Py::new(py, PyWorldlineSession { inner: session }))
         })

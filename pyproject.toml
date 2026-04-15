@@ -1,25 +1,33 @@
 [build-system]
-requires = ["maturin>=1.8,<2.0"]
+requires = ["maturin"]
 build-backend = "maturin"
 
 [project]
 name = "aioworldline"
-version = "0.1.0"
+dynamic = ["version"]
 description = "Unofficial Worldline portal data retrieving client"
-authors = [{ name = "Oleg Korsak", email = "kamikaze.is.waiting.you@gmail.com" }]
+authors = [
+    { name = "Oleg Korsak", email = "kamikaze.is.waiting.you@gmail.com" }
+]
 license = { text = "GPL-3.0" }
-requires-python = ">=3.14"
-keywords = ["worldline", "payments", "transactions"]
+readme = "README.md"
+requires-python = ">=3.13.9,<3.15.0"
 classifiers = [
     "Programming Language :: Rust",
     "Programming Language :: Python :: Implementation :: CPython",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.13",
     "Programming Language :: Python :: 3.14",
     "Topic :: Office/Business :: Financial",
 ]
+keywords = ["finances", "worldline", "api"]
+
+[project.urls]
+Homepage = "https://github.com/kamikaze/aioworldline"
+Repository = "https://github.com/kamikaze/aioworldline"
+Documentation = "https://github.com/kamikaze/aioworldline/blob/main/README.md"
 
 [tool.maturin]
-# Activates the `python` feature which pulls in pyo3 + pyo3-async-runtimes
-# and compiles the extension module entry point in src/lib.rs.
 features = ["python"]
 python-source = "python"
 module-name = "aioworldline"

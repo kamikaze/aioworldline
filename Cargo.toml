@@ -1,6 +1,6 @@
 [package]
 name = "aioworldline"
-version = "0.1.0"
+version = "0.0.1"
 edition = "2024"
 rust-version = "1.94"
 description = "Unofficial Worldline portal data retrieving client"
@@ -10,23 +10,7 @@ repository = "https://github.com/kamikaze/aioworldline"
 keywords = ["worldline", "payments", "transactions"]
 categories = ["finance"]
 
-[[bin]]
-name = "aioworldline"
-path = "src/main.rs"
-required-features = []
-
-[lib]
-name = "aioworldline"
-path = "src/lib.rs"
-crate-type = ["cdylib", "rlib"]
-
-[features]
-# Enables the Python extension module; activated by maturin during `maturin build`.
-# When building the Rust binary without Python headers, omit this feature.
-python = ["dep:pyo3", "dep:pyo3-async-runtimes", "pyo3/extension-module"]
-
 [dependencies]
-# Async runtime
 tokio = { version = "1.52.0", features = ["full"] }
 
 # HTTP client — cookie store for session management, native-tls for portal compat
@@ -59,12 +43,21 @@ tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 thiserror = "2.0.18"
 anyhow = "1.0.102"
 
-# Python bindings (optional — enabled via the `python` feature)
-pyo3 = { version = "0.28.3", features = ["chrono"], optional = true }
+pyo3 = { version = "0.28.3", features = ["chrono", "extension-module"], optional = true }
 pyo3-async-runtimes = { version = "0.28.0", features = ["tokio-runtime"], optional = true }
 
+[lib]
+name = "aioworldline"
+crate-type = ["rlib", "cdylib"]
+
+[features]
+default = []
+python = ["pyo3", "pyo3-async-runtimes"]
+
+
 [profile.release]
-opt-level = 3
-lto = "fat"
 codegen-units = 1
+debug = false
+lto = "fat"
+opt-level = "z"
 strip = true

@@ -39,8 +39,6 @@ impl Settings {
     /// `WORLDLINE_PASSWORD`, `WORLDLINE_ACCOUNT_ID`) is absent.
     pub fn from_env() -> Result<Self, ConfigError> {
         // Load .env file if available; silently ignore if missing.
-        let _ = dotenvy::dotenv();
-
         let raw: RawSettings = envy::from_env()?;
 
         Ok(Self {

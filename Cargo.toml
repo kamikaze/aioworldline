@@ -1,6 +1,6 @@
 [package]
 name = "aioworldline"
-version = "0.5.1"
+version = "0.5.2"
 edition = "2024"
 rust-version = "1.94"
 description = "Unofficial Worldline portal data retrieving client"
@@ -11,40 +11,20 @@ keywords = ["worldline", "payments", "transactions"]
 categories = ["finance"]
 
 [dependencies]
-tokio = { version = "1.52.0", features = ["full"] }
-
-# HTTP client — cookie store for session management, native-tls for portal compat
-reqwest = { version = "0.13.2", features = ["cookies", "form", "gzip", "native-tls", "query"] }
-
-# HTML parsing
-scraper = "0.26.0"
-
-# CSV parsing
-csv = "1.4.0"
-
-# Date/time
-chrono = { version = "0.4.44", features = ["serde"] }
-
-# Serialisation
-serde = { version = "1.0.228", features = ["derive"] }
-
-# Environment / config
-dotenvy = "0.15.7"
-envy = "0.4.2"
-
-# Secret values — prevent accidental logging
-secrecy = { version = "0.10.3", features = ["serde"] }
-
-# Structured logging
-tracing = "0.1.44"
-tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
-
-# Error handling
-thiserror = "2.0.18"
 anyhow = "1.0.102"
-
+chrono = { version = "0.4.44", features = ["serde"] }
+csv = "1.4.0"
+envy = "0.4.2"
 pyo3 = { version = "0.28.3", features = ["chrono", "extension-module"], optional = true }
 pyo3-async-runtimes = { version = "0.28.0", features = ["tokio-runtime"], optional = true }
+reqwest = { version = "0.13.2", features = ["cookies", "form", "gzip", "rustls", "query"] }
+scraper = "0.26.0"
+secrecy = { version = "0.10.3", features = ["serde"] }
+serde = { version = "1.0.228", features = ["derive"] }
+thiserror = "2.0.18"
+tokio = { version = "1.52.0", features = ["full"] }
+tracing = "0.1.44"
+tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 
 [lib]
 name = "aioworldline"

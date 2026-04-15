@@ -11,7 +11,7 @@
 //! from aioworldline import WorldlineSession
 //!
 //! async def main():
-//!     session = await WorldlineSession.login("user", "s3cr3t", timeout_secs=900)
+//!     session = await WorldlineSession.login("user", "s3cr3t", timeout=900)
 //!     csv_bytes: bytes = await session.get_transaction_report(
 //!         date_from=date(2024, 1, 1),
 //!         date_till=date(2024, 1, 31),
@@ -44,27 +44,22 @@ impl PyWorldlineSession {
     /// Perform the two-step login sequence and return an authenticated session.
     ///
     /// Args:
-    ///     username:     Portal username.
-    ///     password:     Portal password (not stored after login).
-    ///     `timeout_secs`: Optional per-request HTTP timeout in seconds.
+    ///     `username`:     Portal username.
+    ///     `password`:     Portal password (not stored after login).
+    ///     `timeout`: Optional per-request HTTP timeout in seconds.
     #[classmethod]
-    #[pyo3(signature = (username, password, timeout_secs = None))]
-    fn login<'py>(
-        _cls: &Bound<'py, PyType>,
-        py: Python<'py>,
+    #[pyo3(signature = (username, password, timeout = None))]
+    async fn login(
+        _cls: Py<PyType>,
         username: String,
         password: String,
-        timeout_secs: Option<u64>,
-    ) -> PyResult<Bound<'py, PyAny>> {
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let timeout = timeout_secs.map(Duration::from_secs);
-            let session =
-                WorldlineSession::login(&username, &SecretString::new(password.into()), timeout)
-                    .await
-                    .map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
-
-            Python::attach(|py| Py::new(py, PyWorldlineSession { inner: session }))
-        })
+        timeout: Option<u64>,
+    ) -> PyResult<Self> {
+        let timeout = timeout.map(Duration::from_secs);
+        WorldlineSession::login(&username, &SecretString::new(password.into()), timeout)
+            .await
+            .map(|inner| Self { inner })
+            .map_err(|e| PyRuntimeError::new_err(e.to_string()))
     }
 
     /// Fetch raw CSV bytes for the given date range.
@@ -95,9 +90,8 @@ impl PyWorldlineSession {
         term_id = None,
         export_type = None,
     ))]
-    fn get_transaction_report<'py>(
+    async fn get_transaction_report(
         &self,
-        py: Python<'py>,
         date_from: chrono::NaiveDate,
         date_till: chrono::NaiveDate,
         account_id: String,
@@ -106,26 +100,22 @@ impl PyWorldlineSession {
         merchant: Option<String>,
         term_id: Option<String>,
         export_type: Option<String>,
-    ) -> PyResult<Bound<'py, PyAny>> {
+    ) -> PyResult<Vec<u8>> {
         let date_type = date_type.unwrap_or_else(|| "D".to_owned());
         let use_date = use_date.unwrap_or_else(|| "TR".to_owned());
         let export_type = export_type.unwrap_or_else(|| "csv".to_owned());
-        let session = self.inner.clone();
-        pyo3_async_runtimes::tokio::future_into_py(py, async move {
-            let opts = crate::worldline::ReportOptions {
-                account_id: &account_id,
-                date_type: &date_type,
-                use_date: &use_date,
-                merchant: merchant.as_deref(),
-                term_id: term_id.as_deref(),
-                export_type: &export_type,
-            };
-            let bytes = session
-                .get_transaction_report(date_from, date_till, &opts)
-                .await
-                .map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
-            Ok(bytes)
-        })
+        let opts = crate::worldline::ReportOptions {
+            account_id: &account_id,
+            date_type: &date_type,
+            use_date: &use_date,
+            merchant: merchant.as_deref(),
+            term_id: term_id.as_deref(),
+            export_type: &export_type,
+        };
+        self.inner
+            .get_transaction_report(date_from, date_till, &opts)
+            .await
+            .map_err(|e| PyRuntimeError::new_err(e.to_string()))
     }
 }
 

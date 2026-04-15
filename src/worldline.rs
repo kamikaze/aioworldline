@@ -25,6 +25,16 @@ const USER_AGENT: &str =
 /// The portal currently accepts `"null"` for this field, but the function is
 /// retained so callers can opt in to proper CSRF handling if the portal begins
 /// enforcing it.
+///
+/// # Panics
+///
+/// Never panics in practice — the CSS selector `"input[id]"` is a static string
+/// that is always a valid selector.
+///
+/// # Errors
+///
+/// Returns [`WorldlineError::CsrfNotFound`] if no `__CSRF` input element is
+/// found in the document.
 pub fn extract_csrf(html: &str) -> Result<String, WorldlineError> {
     let document = Html::parse_document(html);
 
@@ -56,6 +66,11 @@ pub struct WorldlineSession {
 impl WorldlineSession {
     /// Perform the two-step login sequence (GET login page → POST credentials)
     /// and return a live, authenticated session.
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`WorldlineError`] if the HTTP client cannot be built or if any
+    /// network request fails.
     pub async fn login(
         username: &str,
         password: &SecretString,
@@ -100,26 +115,26 @@ impl WorldlineSession {
     ///
     /// The portal returns a UTF-8 file with a BOM (`\xEF\xBB\xBF`); stripping
     /// it is the caller's responsibility (see `main.rs`).
+    ///
+    /// # Errors
+    ///
+    /// Returns a [`WorldlineError`] if any HTTP request fails or the portal
+    /// responds with a non-success status code.
     pub async fn get_transaction_report(
         &self,
         date_from: NaiveDate,
         date_till: NaiveDate,
-        account_id: &str,
-        date_type: &str,
-        use_date: &str,
-        merchant: Option<&str>,
-        term_id: Option<&str>,
-        export_type: &str,
+        opts: &ReportOptions<'_>,
     ) -> Result<Vec<u8>, WorldlineError> {
         // ── Step 1: switch to the target merchant account ─────────────────────
         let switch_params = [
             ("__Action", "merchant:parent_id"),
             ("__CSRF", "null"),
-            ("merchant:parent_id", account_id),
+            ("merchant:parent_id", opts.account_id),
             ("transaction_info:news_id", ""),
         ];
 
-        debug!("Switching merchant account to {account_id}");
+        debug!("Switching merchant account to {}", opts.account_id);
         let resp = self
             .client
             .post(MERCHANT_SWITCH_URL)
@@ -158,8 +173,8 @@ impl WorldlineSession {
 
         // The portal uses placeholder-style return strings for lookup fields.
         // Unwrap to empty string when merchant / terminal are not filtered.
-        let merchant_val = merchant.unwrap_or_default();
-        let term_id_val = term_id.unwrap_or_default();
+        let merchant_val = opts.merchant.unwrap_or_default();
+        let term_id_val = opts.term_id.unwrap_or_default();
 
         let merchant_ret = format!(
             "detailed_turnover:merchant~{merchant_val}|\
@@ -174,16 +189,16 @@ impl WorldlineSession {
 
         let export_params: &[(&str, &str)] = &[
             ("uniqueid", "detailed_turnover:detailed_turnover_search_result"),
-            ("exportType", export_type),
+            ("exportType", opts.export_type),
             ("page", "1"),
             ("countRow", "15"),
             ("sortField", ""),
             ("sortType", "0"),
-            ("detailed_turnover:date_type", date_type),
-            ("detailed_turnover:parent", account_id),
+            ("detailed_turnover:date_type", opts.date_type),
+            ("detailed_turnover:parent", opts.account_id),
             ("detailed_turnover:shipm_date_from", &date_from_str),
             ("detailed_turnover:shipm_date_till", &date_till_str),
-            ("detailed_turnover:use_date", use_date),
+            ("detailed_turnover:use_date", opts.use_date),
             ("detailed_turnover:merchant_ret", &merchant_ret),
             ("detailed_turnover:term_id_ret", &term_ret),
         ];

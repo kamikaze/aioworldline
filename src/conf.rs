@@ -31,6 +31,12 @@ pub struct Settings {
 
 impl Settings {
     /// Load configuration from environment variables (also reads `.env` if present).
+    ///
+    /// # Errors
+    ///
+    /// Returns [`ConfigError::Envy`] if environment variable deserialisation fails,
+    /// or [`ConfigError::Missing`] if any required variable (`WORLDLINE_LOGIN`,
+    /// `WORLDLINE_PASSWORD`, `WORLDLINE_ACCOUNT_ID`) is absent.
     pub fn from_env() -> Result<Self, ConfigError> {
         // Load .env file if available; silently ignore if missing.
         let _ = dotenvy::dotenv();

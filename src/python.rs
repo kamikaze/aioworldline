@@ -46,7 +46,7 @@ impl PyWorldlineSession {
     /// Args:
     ///     username:     Portal username.
     ///     password:     Portal password (not stored after login).
-    ///     timeout_secs: Optional per-request HTTP timeout in seconds.
+    ///     `timeout_secs`: Optional per-request HTTP timeout in seconds.
     #[classmethod]
     #[pyo3(signature = (username, password, timeout_secs = None))]
     fn login<'py>(
@@ -76,17 +76,18 @@ impl PyWorldlineSession {
     /// `data.lstrip(b'\\xef\\xbb\\xbf')` or `data.decode('utf-8-sig')` if needed.
     ///
     /// Args:
-    ///     date_from:    Start of the report period (`datetime.date`).
-    ///     date_till:    End of the report period (`datetime.date`).
-    ///     account_id:   Portal merchant account ID.
-    ///     date_type:    `"D"` for settlement date, `"T"` for transaction date.
-    ///     use_date:     Date reference type (default `"TR"`).
+    ///     `date_from`:    Start of the report period (`datetime.date`).
+    ///     `date_till`:    End of the report period (`datetime.date`).
+    ///     `account_id`:   Portal merchant account ID.
+    ///     `date_type`:    `"D"` for settlement date, `"T"` for transaction date.
+    ///     `use_date`:     Date reference type (default `"TR"`).
     ///     merchant:     Optional merchant filter.
-    ///     term_id:      Optional terminal ID filter.
-    ///     export_type:  Export format sent to portal (default `"csv"`).
+    ///     `term_id`:      Optional terminal ID filter.
+    ///     `export_type`:  Export format sent to portal (default `"csv"`).
     ///
     /// Returns:
     ///     Raw `bytes` payload from the portal.
+    #[allow(clippy::too_many_arguments)]
     #[pyo3(signature = (
         date_from,
         date_till,
@@ -114,17 +115,16 @@ impl PyWorldlineSession {
         let export_type = export_type.unwrap_or_else(|| "csv".to_owned());
         let session = self.inner.clone();
         pyo3_async_runtimes::tokio::future_into_py(py, async move {
+            let opts = crate::worldline::ReportOptions {
+                account_id: &account_id,
+                date_type: &date_type,
+                use_date: &use_date,
+                merchant: merchant.as_deref(),
+                term_id: term_id.as_deref(),
+                export_type: &export_type,
+            };
             let bytes = session
-                .get_transaction_report(
-                    date_from,
-                    date_till,
-                    &account_id,
-                    &date_type,
-                    &use_date,
-                    merchant.as_deref(),
-                    term_id.as_deref(),
-                    &export_type,
-                )
+                .get_transaction_report(date_from, date_till, &opts)
                 .await
                 .map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
             Ok(bytes)

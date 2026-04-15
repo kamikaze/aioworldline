@@ -39,16 +39,7 @@ async fn main() -> anyhow::Result<()> {
 
     info!("Fetching transaction report for {date_from} \u{2013} {date_till}");
     let csv_bytes = session
-        .get_transaction_report(
-            date_from,
-            date_till,
-            opts.account_id,
-            opts.date_type,
-            opts.use_date,
-            opts.merchant,
-            opts.term_id,
-            opts.export_type,
-        )
+        .get_transaction_report(date_from, date_till, &opts)
         .await
         .context("failed to fetch transaction report")?;
 

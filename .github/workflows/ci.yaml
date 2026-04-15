@@ -60,6 +60,7 @@ jobs:
 
   publish-crate:
     name: Publish Crate to Crates.io
+    needs: [test, rustfmt]
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
 

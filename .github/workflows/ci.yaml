@@ -59,22 +59,22 @@ jobs:
 
 
   publish-crate:
-    name: Publish crate to Codeberg
-    needs: [test, rustfmt]
+    name: Publish Crate to Crates.io
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
 
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v5
 
-      - name: Install Rust
-        uses: dtolnay/rust-toolchain@stable
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@master
+        with:
+          toolchain: stable
 
-      - name: Publish crate
-        run: cargo publish --registry bixority-codeberg
+      - name: Publish crate to crates.io
+        run: cargo publish
         env:
-          CARGO_REGISTRIES_BIXORITY_CODEBERG_TOKEN: Bearer ${{ secrets.CODEBERG_TOKEN }}
-
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CRATES_IO_TOKEN }}
 
   build-wheels:
     name: Build wheels (${{ matrix.os }} / py${{ matrix.python }})

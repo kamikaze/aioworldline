@@ -27,7 +27,7 @@ async fn main() -> anyhow::Result<()> {
     let session = WorldlineSession::login(
         &settings.login,
         &settings.password,
-        Some(Duration::from_secs(15 * 60)),
+        Some(Duration::from_mins(15)),
     )
     .await
     .context("login failed")?;

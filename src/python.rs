@@ -1,143 +1,97 @@
-//! Python asyncio bindings for the Worldline client.
-//!
-//! Compiled only when the `python` feature is enabled.  Exposes
-//! `WorldlineSession` as an awaitable Python class backed by Tokio.
-//!
-//! # Usage
-//!
-//! ```python
-//! import asyncio
-//! from datetime import date
-//! from aioworldline import login, get_transaction_report
-//!
-//! async def main():
-//!     async with login(timeout=900) as wl_session:
-//!         csv_bytes: bytes = await get_transaction_report(
-//!             wl_session,
-//!             date_from=date(2024, 1, 1),
-//!             date_till=date(2024, 1, 31),
-//!             account_id="123456",
-//!         )
-//!         print(csv_bytes.decode())
-//!
-//! asyncio.run(main())
-//! ```
 use std::time::Duration;
-
+use chrono::NaiveDate;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
-use secrecy::SecretString;
+use pyo3::types::{PyBytes, PyDate, PyDateAccess};
+use pyo3_async_runtimes::tokio::future_into_py;
+use secrecy::{ExposeSecret, SecretString};
+use crate::worldline::{ReportOptions, WorldlineSession};
 
-use crate::worldline::WorldlineSession;
-
-/// An authenticated Worldline portal session.
-///
-/// Obtain one by awaiting the module-level `login(...)` function.
 #[pyclass(name = "WorldlineSession")]
 pub struct PyWorldlineSession {
     inner: WorldlineSession,
 }
 
-#[pymethods]
 impl PyWorldlineSession {
-    /// Support `async with login(...) as session:`.
-    async fn __aenter__(slf: PyRefMut<'_, Self>) -> PyResult<PyRefMut<'_, Self>> {
-        Ok(slf)
-    }
-
-    /// No cleanup is required, but this makes the object a valid async context manager.
-    async fn __aexit__(
-        &self,
-        _exc_type: Option<&Bound<'_, PyAny>>,
-        _exc: Option<&Bound<'_, PyAny>>,
-        _tb: Option<&Bound<'_, PyAny>>,
-    ) -> PyResult<bool> {
-        Ok(false)
+    pub fn new(inner: WorldlineSession) -> Self {
+        Self { inner }
     }
 }
 
-/// Perform the two-step login sequence and return an authenticated session.
-///
-/// Args:
-///     `username`: Portal username.
-///     `password`: Portal password (not stored after login).
-///     `timeout`: Optional per-request HTTP timeout in seconds.
+/// Python date -> chrono `NaiveDate`
+fn pydate_to_naive(d: &Bound<'_, PyDate>) -> PyResult<NaiveDate> {
+    NaiveDate::from_ymd_opt(
+        d.get_year(),
+        d.get_month().into(),
+        d.get_day().into(),
+    )
+        .ok_or_else(|| PyRuntimeError::new_err("invalid date"))
+}
+
+#[pymethods]
+impl PyWorldlineSession {
+    fn get_transaction_report<'py>(
+        &self,
+        py: Python<'py>,
+        date_from: &Bound<'py, PyAny>,
+        date_till: &Bound<'py, PyAny>,
+        account_id: String,
+    ) -> PyResult<Bound<'py, PyAny>> {
+        let wl_session = self.inner.clone();
+
+        let date_from = pydate_to_naive(date_from.cast::<PyDate>()?)?;
+        let date_till = pydate_to_naive(date_till.cast::<PyDate>()?)?;
+
+        let account_id_str = SecretString::new(account_id.into())
+            .expose_secret()
+            .to_owned();
+
+        future_into_py(py, async move {
+            let opts = ReportOptions {
+                account_id: &account_id_str,
+                ..Default::default()
+            };
+
+            let bytes: Vec<u8> = wl_session
+                .get_transaction_report(date_from, date_till, &opts)
+                .await
+                .map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
+
+            Python::try_attach(|py| {
+                Ok(PyBytes::new(py, &bytes).into_any().unbind())
+            })
+                .ok_or_else(|| PyRuntimeError::new_err("Python interpreter not attached"))?
+        })
+    }
+}
+
 #[pyfunction]
-#[pyo3(signature = (username, password, timeout = None))]
-async fn login(
+fn login(
+    py: Python<'_>,
     username: String,
     password: String,
     timeout: Option<u64>,
-) -> PyResult<PyWorldlineSession> {
+) -> PyResult<Bound<'_, PyAny>> {
     let timeout = timeout.map(Duration::from_secs);
-    WorldlineSession::login(&username, &SecretString::new(password.into()), timeout)
-        .await
-        .map(|inner| PyWorldlineSession { inner })
-        .map_err(|e| PyRuntimeError::new_err(e.to_string()))
+
+    future_into_py(py, async move {
+        let password = SecretString::new(password.into());
+        let session = WorldlineSession::login(&username, &password, timeout)
+            .await
+            .map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
+
+        Python::try_attach(|py| {
+            Ok(PyWorldlineSession::new(session)
+                .into_pyobject(py)?
+                .into_any()
+                .unbind())
+        })
+            .ok_or_else(|| PyRuntimeError::new_err("Python interpreter not attached"))?
+    })
 }
 
-/// Fetch raw CSV bytes for the given date range.
-///
-/// Args:
-///     `session`:   Authenticated Worldline session returned by `login(...)`.
-///     `date_from`: Start of the report period (`datetime.date`).
-///     `date_till`: End of the report period (`datetime.date`).
-///     `account_id`: Portal merchant account ID.
-///     `date_type`:  `"D"` for settlement date, `"T"` for transaction date.
-///     `use_date`:   Date reference type (default `"TR"`).
-///     `merchant`:   Optional merchant filter.
-///     `term_id`:    Optional terminal ID filter.
-///     `export_type`: Export format sent to portal (default `"csv"`).
-///
-/// Returns:
-///     Raw `bytes` payload from the portal.
-#[allow(clippy::too_many_arguments)]
-#[pyfunction]
-#[pyo3(signature = (
-    session,
-    date_from,
-    date_till,
-    account_id,
-    date_type = None,
-    use_date = None,
-    merchant = None,
-    term_id = None,
-    export_type = None,
-))]
-async fn get_transaction_report(
-    session: PyRef<'_, PyWorldlineSession>,
-    date_from: chrono::NaiveDate,
-    date_till: chrono::NaiveDate,
-    account_id: String,
-    date_type: Option<String>,
-    use_date: Option<String>,
-    merchant: Option<String>,
-    term_id: Option<String>,
-    export_type: Option<String>,
-) -> PyResult<Vec<u8>> {
-    let date_type = date_type.unwrap_or_else(|| "D".to_owned());
-    let use_date = use_date.unwrap_or_else(|| "TR".to_owned());
-    let export_type = export_type.unwrap_or_else(|| "csv".to_owned());
-    let opts = crate::worldline::ReportOptions {
-        account_id: &account_id,
-        date_type: &date_type,
-        use_date: &use_date,
-        merchant: merchant.as_deref(),
-        term_id: term_id.as_deref(),
-        export_type: &export_type,
-    };
-
-    session
-        .inner
-        .get_transaction_report(date_from, date_till, &opts)
-        .await
-        .map_err(|e| PyRuntimeError::new_err(e.to_string()))
-}
-
-/// Register all Python-exposed types and functions into the extension module.
-pub fn register(m: &Bound<'_, pyo3::types::PyModule>) -> PyResult<()> {
+pub fn init_module(m: &Bound<'_, PyModule>) -> PyResult<()> {
     m.add_class::<PyWorldlineSession>()?;
     m.add_function(wrap_pyfunction!(login, m)?)?;
-    m.add_function(wrap_pyfunction!(get_transaction_report, m)?)?;
     Ok(())
 }

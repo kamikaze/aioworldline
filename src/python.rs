@@ -1,11 +1,11 @@
-use std::time::Duration;
+use crate::worldline::{ReportOptions, WorldlineSession};
 use chrono::NaiveDate;
 use pyo3::exceptions::PyRuntimeError;
 use pyo3::prelude::*;
 use pyo3::types::{PyBytes, PyDate, PyDateAccess};
 use pyo3_async_runtimes::tokio::future_into_py;
 use secrecy::{ExposeSecret, SecretString};
-use crate::worldline::{ReportOptions, WorldlineSession};
+use std::time::Duration;
 
 #[pyclass(name = "WorldlineSession")]
 pub struct PyWorldlineSession {
@@ -20,11 +20,7 @@ impl PyWorldlineSession {
 
 /// Python date -> chrono `NaiveDate`
 fn pydate_to_naive(d: &Bound<'_, PyDate>) -> PyResult<NaiveDate> {
-    NaiveDate::from_ymd_opt(
-        d.get_year(),
-        d.get_month().into(),
-        d.get_day().into(),
-    )
+    NaiveDate::from_ymd_opt(d.get_year(), d.get_month().into(), d.get_day().into())
         .ok_or_else(|| PyRuntimeError::new_err("invalid date"))
 }
 
@@ -57,9 +53,7 @@ impl PyWorldlineSession {
                 .await
                 .map_err(|e| PyRuntimeError::new_err(e.to_string()))?;
 
-            Python::try_attach(|py| {
-                Ok(PyBytes::new(py, &bytes).into_any().unbind())
-            })
+            Python::try_attach(|py| Ok(PyBytes::new(py, &bytes).into_any().unbind()))
                 .ok_or_else(|| PyRuntimeError::new_err("Python interpreter not attached"))?
         })
     }
@@ -86,7 +80,7 @@ fn login(
                 .into_any()
                 .unbind())
         })
-            .ok_or_else(|| PyRuntimeError::new_err("Python interpreter not attached"))?
+        .ok_or_else(|| PyRuntimeError::new_err("Python interpreter not attached"))?
     })
 }
 

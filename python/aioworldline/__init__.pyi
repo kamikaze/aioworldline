@@ -1,1 +1,1 @@
-from aioworldline import worldline as worldline
+from aioworldline import worldline  # type: ignore[reportMissingModuleSource]

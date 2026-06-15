@@ -16,7 +16,7 @@ chrono = { version = "0.4.45", features = ["serde"] }
 csv = "1.4.0"
 envy = "0.4.2"
 pyo3 = { version = "0.28.3", features = ["extension-module"], optional = true }
-pyo3-async-runtimes = { version = "0.28.0", features = ["tokio-runtime"], optional = true }
+pyo3-async-runtimes = { version = "0.29.0", features = ["tokio-runtime"], optional = true }
 reqwest = { version = "0.13.4", features = ["cookies", "form", "gzip", "rustls", "query"] }
 scraper = "0.27.0"
 secrecy = { version = "0.10.3", features = ["serde"] }

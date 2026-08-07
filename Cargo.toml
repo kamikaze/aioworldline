@@ -1,8 +1,8 @@
 [package]
 name = "aioworldline"
-version = "0.5.11"
+version = "0.5.13"
 edition = "2024"
-rust-version = "1.96"
+rust-version = "1.97"
 description = "Unofficial Worldline portal data retrieving client"
 authors = ["Oleg Korsak <kamikaze.is.waiting.you@gmail.com>"]
 license = "GPL-3.0"
@@ -15,14 +15,14 @@ anyhow = "1.0.102"
 chrono = { version = "0.4.45", features = ["serde"] }
 csv = "1.4.0"
 envy = "0.4.2"
-pyo3 = { version = "0.28.3", features = ["extension-module"], optional = true }
-pyo3-async-runtimes = { version = "0.28.0", features = ["tokio-runtime"], optional = true }
+pyo3 = { version = "0.29.2", features = ["extension-module"], optional = true }
+pyo3-async-runtimes = { version = "0.29.0", features = ["tokio-runtime"], optional = true }
 reqwest = { version = "0.13.4", features = ["cookies", "form", "gzip", "rustls", "query"] }
 scraper = "0.27.0"
 secrecy = { version = "0.10.3", features = ["serde"] }
-serde = { version = "1.0.228", features = ["derive"] }
-thiserror = "2.0.18"
-tokio = { version = "1.52.3", features = ["full"] }
+serde = { version = "1.0.229", features = ["derive"] }
+thiserror = "2.0.19"
+tokio = { version = "1.53.1", features = ["full"] }
 tracing = "0.1.44"
 tracing-subscriber = { version = "0.3.23", features = ["env-filter"] }
 
